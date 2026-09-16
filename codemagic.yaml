@@ -20,6 +20,7 @@ workflows:
           echo "storeFile: $CM_KEYSTORE_PATH"
       - script: flutter pub get
       - script: flutter pub run flutter_launcher_icons
+      - script: flutter pub run flutter_native_splash:create
       - script: flutter build appbundle --release
       - script: flutter build apk --release
     artifacts:
