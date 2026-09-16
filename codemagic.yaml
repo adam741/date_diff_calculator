@@ -1,0 +1,28 @@
+workflows:
+  android-workflow:
+    environment:
+      flutter: 3.35.2
+      android_signing:
+        - ss1
+    scripts:
+      - name: Set up key.properties from Codemagic keystore
+        script: |
+          rm -f "$CM_BUILD_DIR/android/key.properties"
+          cat > "$CM_BUILD_DIR/android/key.properties" <<EOF
+          storePassword=$CM_KEYSTORE_PASSWORD
+          keyPassword=$CM_KEY_PASSWORD
+          keyAlias=$CM_KEY_ALIAS
+          storeFile=$CM_KEYSTORE_PATH
+          EOF
+          echo "storePassword length: ${#CM_KEYSTORE_PASSWORD}"
+          echo "keyPassword length: ${#CM_KEY_PASSWORD}"
+          echo "keyAlias: $CM_KEY_ALIAS"
+          echo "storeFile: $CM_KEYSTORE_PATH"
+      - script: flutter pub get
+      - script: flutter pub run flutter_launcher_icons
+      - script: flutter pub run flutter_native_splash:create
+      - script: flutter build appbundle --release
+      - script: flutter build apk --release
+    artifacts:
+      - build/**/outputs/**/*.aab
+      - build/**/outputs/**/*.apk
