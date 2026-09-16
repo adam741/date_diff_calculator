@@ -11,7 +11,7 @@ void main() {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.light,
     ),
   );
 
@@ -19,7 +19,7 @@ void main() {
 
   // Remove the plain native splash almost immediately; our own
   // SplashScreen widget (with the rounded-corner logo) takes over
-  // and controls the full 1.5s display time itself.
+  // and controls the full 2s display time itself.
   FlutterNativeSplash.remove();
 }
 
@@ -28,7 +28,7 @@ class AppColors {
   static const primary = Color(0xFF4F8EF7);
   static const primaryDark = Color(0xFF2E6FE0);
   static const accent = Color(0xFF00D9C0);
-  static const bg = Color(0xFFF4F8FE);
+  static const bg = Color(0xFFEAF1FC);
   static const cardShadow = Color(0x1A1D5FC4);
   static const textDark = Color(0xFF1B233A);
   static const textMuted = Color(0xFF8B93A6);
@@ -63,8 +63,9 @@ class DateDiffApp extends StatelessWidget {
 
 /// Shows the app logo with rounded corners (clipped in code, not baked
 /// into the PNG) on the app's sky-blue background, zooming it in with a
-/// slight bounce, then fades/slides the app name in underneath it. Shown
-/// for exactly 1.5 seconds, then hands off to the main calculator page.
+/// slight bounce, with the app name closely following right underneath
+/// it so the two read as one unit. Shown for exactly 2 seconds, then
+/// hands off to the main calculator page.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -84,30 +85,30 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
 
     // Zoom the logo in with a slight overshoot ("grows a bit then settles
-    // back") over the full 1.5s the splash screen is shown for.
+    // back") over the full 2s the splash screen is shown for.
     _logoController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 2000),
     );
     _logoScale = Tween<double>(begin: 0.6, end: 1.0).animate(
       CurvedAnimation(parent: _logoController, curve: Curves.easeOutBack),
     );
 
-    // The app name fades and slides in just after the logo has mostly
-    // finished zooming, so it reads as a follow-up beat rather than
-    // competing with the logo for attention.
+    // The app name fades and slides in early, close behind the logo, so
+    // the icon and the name read as one unit rather than two separate
+    // beats.
     _textFade = CurvedAnimation(
       parent: _logoController,
-      curve: const Interval(0.45, 1.0, curve: Curves.easeOut),
+      curve: const Interval(0.15, 0.65, curve: Curves.easeOut),
     );
     _textSlide = Tween<Offset>(
-      begin: const Offset(0, 0.25),
+      begin: const Offset(0, 0.2),
       end: Offset.zero,
     ).animate(_textFade);
 
     _logoController.forward();
 
-    Future.delayed(const Duration(milliseconds: 1500), () {
+    Future.delayed(const Duration(milliseconds: 2000), () {
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const DateDiffHomePage()),
@@ -142,7 +143,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 12),
             FadeTransition(
               opacity: _textFade,
               child: SlideTransition(
@@ -291,58 +292,83 @@ class _DateDiffHomePageState extends State<DateDiffHomePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppColors.primaryDark, AppColors.primary],
-            stops: [0.0, 0.3],
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 8),
-                _buildHeader(),
-                const SizedBox(height: 28),
-                _buildDateCard(
-                  label: 'From date',
-                  icon: Icons.flight_takeoff_rounded,
-                  date: _startDate,
-                  onTap: () => _pickDate(isStart: true),
-                ),
-                const SizedBox(height: 14),
-                _buildDateCard(
-                  label: 'To date',
-                  icon: Icons.flight_land_rounded,
-                  date: _endDate,
-                  onTap: () => _pickDate(isStart: false),
-                ),
-                const SizedBox(height: 22),
-                if (_hasResult) _buildResultSection() else _buildEmptyHint(),
-                const SizedBox(height: 20),
-                if (_hasResult)
-                  TextButton.icon(
-                    onPressed: _reset,
-                    icon: const Icon(Icons.refresh_rounded,
-                        color: Colors.white70),
-                    label: const Text(
-                      'New calculation',
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                  ),
-                const SizedBox(height: 12),
-              ],
+      body: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            color: AppColors.primary,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+                child: _buildHeader(),
+              ),
             ),
           ),
-        ),
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: AppColors.bg,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(26)),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryDark.withOpacity(0.12),
+                    blurRadius: 16,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                top: false,
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildDateCard(
+                        label: 'From date',
+                        icon: Icons.flight_takeoff_rounded,
+                        date: _startDate,
+                        onTap: () => _pickDate(isStart: true),
+                      ),
+                      const SizedBox(height: 14),
+                      _buildDateCard(
+                        label: 'To date',
+                        icon: Icons.flight_land_rounded,
+                        date: _endDate,
+                        onTap: () => _pickDate(isStart: false),
+                      ),
+                      const SizedBox(height: 22),
+                      if (_hasResult)
+                        _buildResultSection()
+                      else
+                        _buildEmptyHint(),
+                      const SizedBox(height: 20),
+                      if (_hasResult)
+                        TextButton.icon(
+                          onPressed: _reset,
+                          icon: const Icon(Icons.refresh_rounded,
+                              color: AppColors.primary),
+                          label: Text(
+                            'New calculation',
+                            style: GoogleFonts.poppins(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 12),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -351,11 +377,11 @@ class _DateDiffHomePageState extends State<DateDiffHomePage>
     return Column(
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
           child: Image.asset(
             'assets/icon.png',
-            width: 64,
-            height: 64,
+            width: 54,
+            height: 54,
             fit: BoxFit.cover,
           ),
         ),
@@ -458,12 +484,12 @@ class _DateDiffHomePageState extends State<DateDiffHomePage>
       child: Column(
         children: [
           Icon(Icons.date_range_rounded,
-              color: Colors.white.withOpacity(0.5), size: 46),
+              color: AppColors.textMuted.withOpacity(0.7), size: 46),
           const SizedBox(height: 10),
           Text(
             'Pick both dates to see the result',
             style: GoogleFonts.poppins(
-              color: Colors.white.withOpacity(0.7),
+              color: AppColors.textMuted,
               fontSize: 14,
             ),
           ),
