@@ -25,13 +25,13 @@ void main() {
 
 /// App color palette
 class AppColors {
-  static const primary = Color(0xFF5B4FE9);
-  static const primaryDark = Color(0xFF2E1F8F);
+  static const primary = Color(0xFF4F8EF7);
+  static const primaryDark = Color(0xFF2E6FE0);
   static const accent = Color(0xFF00D9C0);
-  static const bg = Color(0xFFF4F5FB);
-  static const cardShadow = Color(0x1A2E1F8F);
-  static const textDark = Color(0xFF1E1B39);
-  static const textMuted = Color(0xFF8B87A6);
+  static const bg = Color(0xFFF4F8FE);
+  static const cardShadow = Color(0x1A1D5FC4);
+  static const textDark = Color(0xFF1B233A);
+  static const textMuted = Color(0xFF8B93A6);
 }
 
 class DateDiffApp extends StatelessWidget {
@@ -62,8 +62,9 @@ class DateDiffApp extends StatelessWidget {
 }
 
 /// Shows the app logo with rounded corners (clipped in code, not baked
-/// into the PNG) on a plain white background for exactly 1.5 seconds,
-/// then hands off to the main calculator page.
+/// into the PNG) on the app's sky-blue background, zooming it in with a
+/// slight bounce, then fades/slides the app name in underneath it. Shown
+/// for exactly 1.5 seconds, then hands off to the main calculator page.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -71,10 +72,41 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _logoController;
+  late final Animation<double> _logoScale;
+  late final Animation<double> _textFade;
+  late final Animation<Offset> _textSlide;
+
   @override
   void initState() {
     super.initState();
+
+    // Zoom the logo in with a slight overshoot ("grows a bit then settles
+    // back") over the full 1.5s the splash screen is shown for.
+    _logoController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+    _logoScale = Tween<double>(begin: 0.6, end: 1.0).animate(
+      CurvedAnimation(parent: _logoController, curve: Curves.easeOutBack),
+    );
+
+    // The app name fades and slides in just after the logo has mostly
+    // finished zooming, so it reads as a follow-up beat rather than
+    // competing with the logo for attention.
+    _textFade = CurvedAnimation(
+      parent: _logoController,
+      curve: const Interval(0.45, 1.0, curve: Curves.easeOut),
+    );
+    _textSlide = Tween<Offset>(
+      begin: const Offset(0, 0.25),
+      end: Offset.zero,
+    ).animate(_textFade);
+
+    _logoController.forward();
+
     Future.delayed(const Duration(milliseconds: 1500), () {
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -85,18 +117,47 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   @override
+  void dispose() {
+    _logoController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.primary,
       body: Center(
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(40),
-          child: Image.asset(
-            'assets/icon.png',
-            width: 160,
-            height: 160,
-            fit: BoxFit.cover,
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ScaleTransition(
+              scale: _logoScale,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(40),
+                child: Image.asset(
+                  'assets/icon.png',
+                  width: 160,
+                  height: 160,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(height: 22),
+            FadeTransition(
+              opacity: _textFade,
+              child: SlideTransition(
+                position: _textSlide,
+                child: Text(
+                  'Date Diff Calculator',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -231,12 +292,14 @@ class _DateDiffHomePageState extends State<DateDiffHomePage>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [AppColors.primaryDark, AppColors.primary],
-            stops: [0.0, 0.35],
+            stops: [0.0, 0.3],
           ),
         ),
         child: SafeArea(
@@ -287,15 +350,14 @@ class _DateDiffHomePageState extends State<DateDiffHomePage>
   Widget _buildHeader() {
     return Column(
       children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(20),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Image.asset(
+            'assets/icon.png',
+            width: 64,
+            height: 64,
+            fit: BoxFit.cover,
           ),
-          child: const Icon(Icons.event_note_rounded,
-              color: Colors.white, size: 32),
         ),
         const SizedBox(height: 14),
         Text(
