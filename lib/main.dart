@@ -3,8 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
-void main() {
+void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
@@ -15,7 +16,12 @@ void main() {
     ),
   );
 
-  runApp(const DateDiffApp());
+  // Read the app's display name from the platform itself (the same
+  // value set in AndroidManifest.xml / Info.plist) instead of hardcoding
+  // it as a separate string in the Dart source.
+  final packageInfo = await PackageInfo.fromPlatform();
+
+  runApp(DateDiffApp(appName: packageInfo.appName));
 
   // Remove the plain native splash almost immediately; our own
   // SplashScreen widget (with the rounded-corner logo) takes over
@@ -35,13 +41,15 @@ class AppColors {
 }
 
 class DateDiffApp extends StatelessWidget {
-  const DateDiffApp({super.key});
+  const DateDiffApp({super.key, required this.appName});
+
+  final String appName;
 
   @override
   Widget build(BuildContext context) {
     final baseTextTheme = GoogleFonts.poppinsTextTheme();
     return MaterialApp(
-      title: 'Date Diff Calculator',
+      title: appName,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -56,7 +64,7 @@ class DateDiffApp extends StatelessWidget {
           displayColor: AppColors.textDark,
         ),
       ),
-      home: const SplashScreen(),
+      home: SplashScreen(appName: appName),
     );
   }
 }
@@ -67,7 +75,9 @@ class DateDiffApp extends StatelessWidget {
 /// it so the two read as one unit. Shown for exactly 2 seconds, then
 /// hands off to the main calculator page.
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  const SplashScreen({super.key, required this.appName});
+
+  final String appName;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -111,7 +121,7 @@ class _SplashScreenState extends State<SplashScreen>
     Future.delayed(const Duration(milliseconds: 2000), () {
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const DateDiffHomePage()),
+          MaterialPageRoute(builder: (_) => DateDiffHomePage(appName: widget.appName)),
         );
       }
     });
@@ -149,7 +159,7 @@ class _SplashScreenState extends State<SplashScreen>
               child: SlideTransition(
                 position: _textSlide,
                 child: Text(
-                  'Date Diff Calculator',
+                  widget.appName,
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontSize: 20,
@@ -166,7 +176,9 @@ class _SplashScreenState extends State<SplashScreen>
 }
 
 class DateDiffHomePage extends StatefulWidget {
-  const DateDiffHomePage({super.key});
+  const DateDiffHomePage({super.key, required this.appName});
+
+  final String appName;
 
   @override
   State<DateDiffHomePage> createState() => _DateDiffHomePageState();
@@ -385,7 +397,7 @@ class _DateDiffHomePageState extends State<DateDiffHomePage>
         ),
         const SizedBox(height: 14),
         Text(
-          'Date Diff Calculator',
+          widget.appName,
           textAlign: TextAlign.center,
           style: GoogleFonts.poppins(
             color: Colors.white,
