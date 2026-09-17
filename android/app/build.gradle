@@ -22,7 +22,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace "com.dateflow.datediff"
+    namespace "com.datebound.calculator.app"
     compileSdk 34
     ndkVersion flutter.ndkVersion
 
@@ -40,7 +40,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.dateflow.datediff"
+        applicationId "com.datebound.calculator.app"
         minSdk 21
         targetSdk 34
         versionCode flutterVersionCode.toInteger()
