@@ -1,4 +1,4 @@
-package com.dateflow.datediff
+package com.datebound.calculator.app
 
 import io.flutter.embedding.android.FlutterActivity
 
