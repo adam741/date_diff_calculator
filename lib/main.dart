@@ -310,8 +310,6 @@ class _DateDiffHomePageState extends State<DateDiffHomePage>
               width: double.infinity,
               decoration: BoxDecoration(
                 color: AppColors.bg,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(26)),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.primaryDark.withOpacity(0.12),
