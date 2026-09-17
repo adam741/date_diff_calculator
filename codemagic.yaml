@@ -1,7 +1,7 @@
 workflows:
   android-workflow:
     environment:
-      flutter: 3.41.0
+      flutter: 3.44.8
       android_signing:
         - ss1
     scripts:
